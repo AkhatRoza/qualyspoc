@@ -1,12 +1,12 @@
 pipeline {
     agent any 
     environment {
-    DOCKERHUB_CREDENTIALS = credentials('axat960205@gmail.com')
+    DOCKERHUB_CREDENTIALS = credentials('whoamiuname')
     }
     stages { 
         stage('SCM Checkout') {
             steps{
-            git 'https://github.com/ravdy/nodejs-demo.git'
+            git 'https://github.com/AkhatRoza/qualyspoc.git'
             }
         }
 
@@ -22,7 +22,7 @@ pipeline {
         }
         stage('push image') {
             steps{
-                sh 'docker push valaxy/nodeapp:$BUILD_NUMBER'
+                sh 'docker push whoamiuname/nodeapp:$BUILD_NUMBER'
             }
         }
 }
