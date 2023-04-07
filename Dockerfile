@@ -1,12 +1,38 @@
-ADD file ... in /
-CMD ["bash"]
-LABEL maintainer=opsxcq@strm.sh
-/bin/sh -c apt-get update &&
-COPY file:e1162a50525b284972b663daef5ca505c724673da0dda9a707bc8f67e4ec1220 in /etc/php5/apache2/php.ini
-COPY dir:9c23b23aaae913c12ab3d2659b4d45398ee5652ed113267814c49d9ba501992a in /var/www/html
-COPY file:55e9d94279708ad763c17a1ca775e225829b275ace5716ca8a0aff69c70161a4 in /var/www/html/config/
-/bin/sh -c chown www-data:www-data -R
-/bin/sh -c service mysql start
+FROM debian:9.2
+
+LABEL maintainer "opsxcq@strm.sh"
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    debconf-utils && \
+    echo mariadb-server mysql-server/root_password password vulnerables | debconf-set-selections && \
+    echo mariadb-server mysql-server/root_password_again password vulnerables | debconf-set-selections && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    apache2 \
+    mariadb-server \
+    php \
+    php-mysql \
+    php-pgsql \
+    php-pear \
+    php-gd \
+    && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY php.ini /etc/php5/apache2/php.ini
+COPY dvwa /var/www/html
+
+COPY config.inc.php /var/www/html/config/
+
+RUN chown www-data:www-data -R /var/www/html && \
+    rm /var/www/html/index.html
+
+RUN service mysql start && \
+    sleep 3 && \
+    mysql -uroot -pvulnerables -e "CREATE USER app@localhost IDENTIFIED BY 'vulnerables';CREATE DATABASE dvwa;GRANT ALL privileges ON dvwa.* TO 'app'@localhost;"
+
 EXPOSE 80
-COPY file:f24e7713eb6c0568608bea3ff7b52edda86305cfd5bef0ac4e57efdb15792202 in /
+
+COPY main.sh /
 ENTRYPOINT ["/main.sh"]
